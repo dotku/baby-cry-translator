@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "宝宝哭声翻译器 - AI婴儿哭声分析",
+    "description": "使用YAMNet深度学习技术，AI分析宝宝哭声，帮助理解宝宝的需求"
+  },
+  "nav": {
+    "title": "宝宝哭声翻译器",
+    "subtitle": "AI驱动的婴儿哭声分析"
+  },
+  "hero": {
+    "heading": "读懂宝宝的哭声",
+    "description": "录制宝宝的哭声，我们的AI将使用深度学习分析哭声模式，帮助识别宝宝的需求。",
+    "powered": "基于 YAMNet + TensorFlow.js"
+  },
+  "recorder": {
+    "idle": "点击开始录音",
+    "recording": "录音中... 点击停止",
+    "analyzing": "正在分析哭声...",
+    "permission": "请允许麦克风访问以使用此功能。",
+    "error": "访问麦克风出错，请检查权限设置。",
+    "tryAgain": "重试",
+    "recordAgain": "重新录音"
+  },
+  "results": {
+    "title": "分析结果",
+    "confidence": "置信度",
+    "category": "类别",
+    "tip": "建议措施",
+    "disclaimer": "这是基于AI的估计，仅供参考。如有医疗问题，请咨询儿科医生。"
+  },
+  "categories": {
+    "hungry": {
+      "label": "饥饿",
+      "tip": "宝宝可能饿了，尝试喂奶或喂食。"
+    },
+    "tired": {
+      "label": "疲倦/想睡",
+      "tip": "宝宝似乎累了，尝试创造安静舒适的睡眠环境。"
+    },
+    "discomfort": {
+      "label": "不舒服",
+      "tip": "检查尿布是否湿了、衣服是否舒适、温度是否合适。"
+    },
+    "belly_pain": {
+      "label": "肚子痛",
+      "tip": "尝试轻柔的腹部按摩或自行车腿运动来缓解胀气。"
+    },
+    "burp": {
+      "label": "需要拍嗝",
+      "tip": "将宝宝竖直抱起，轻轻拍打背部帮助排出气体。"
+    }
+  },
+  "footer": {
+    "disclaimer": "仅用于教育和演示目的。",
+    "github": "在GitHub上查看"
+  }
+}

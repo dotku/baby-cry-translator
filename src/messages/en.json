@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "BabyCry Translator - AI Baby Cry Analyzer",
+    "description": "Understand your baby's needs with AI-powered cry analysis using YAMNet deep learning"
+  },
+  "nav": {
+    "title": "BabyCry Translator",
+    "subtitle": "AI-Powered Baby Cry Analyzer"
+  },
+  "hero": {
+    "heading": "Understand Your Baby's Cry",
+    "description": "Record your baby's cry and our AI will analyze it using deep learning to help identify what your baby needs.",
+    "powered": "Powered by YAMNet + TensorFlow.js"
+  },
+  "recorder": {
+    "idle": "Tap to Start Recording",
+    "recording": "Recording... Tap to Stop",
+    "analyzing": "Analyzing cry pattern...",
+    "permission": "Please allow microphone access to use this feature.",
+    "error": "Error accessing microphone. Please check permissions.",
+    "tryAgain": "Try Again",
+    "recordAgain": "Record Again"
+  },
+  "results": {
+    "title": "Analysis Result",
+    "confidence": "Confidence",
+    "category": "Category",
+    "tip": "Suggested Action",
+    "disclaimer": "This is an AI-based estimation for reference only. Always consult your pediatrician for medical concerns."
+  },
+  "categories": {
+    "hungry": {
+      "label": "Hungry",
+      "tip": "Your baby might be hungry. Try offering a feeding."
+    },
+    "tired": {
+      "label": "Tired / Sleepy",
+      "tip": "Your baby seems tired. Try creating a calm, quiet environment for sleep."
+    },
+    "discomfort": {
+      "label": "Discomfort",
+      "tip": "Check for wet diaper, uncomfortable clothing, or temperature issues."
+    },
+    "belly_pain": {
+      "label": "Belly Pain",
+      "tip": "Try gentle tummy massage or bicycle legs to relieve gas."
+    },
+    "burp": {
+      "label": "Needs Burping",
+      "tip": "Hold your baby upright and gently pat their back to help release trapped air."
+    }
+  },
+  "footer": {
+    "disclaimer": "For educational and demonstration purposes only.",
+    "github": "View on GitHub"
+  }
+}
