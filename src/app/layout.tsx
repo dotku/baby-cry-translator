@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BabyCry Translator - AI Baby Cry Analyzer",
+  title: "BabyTalk - AI Baby Cry Analyzer",
   description:
     "Understand your baby's needs with AI-powered cry analysis using YAMNet deep learning",
 };

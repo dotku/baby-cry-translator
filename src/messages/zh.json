@@ -1,10 +1,10 @@
 {
   "meta": {
-    "title": "宝宝哭声翻译器 - AI婴儿哭声分析",
+    "title": "BabyTalk - AI婴儿哭声分析",
     "description": "使用YAMNet深度学习技术，AI分析宝宝哭声，帮助理解宝宝的需求"
   },
   "nav": {
-    "title": "宝宝哭声翻译器",
+    "title": "BabyTalk",
     "subtitle": "AI驱动的婴儿哭声分析"
   },
   "hero": {
