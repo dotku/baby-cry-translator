@@ -10,7 +10,17 @@
   "hero": {
     "heading": "读懂宝宝的哭声",
     "description": "录制宝宝的哭声，我们的AI将使用深度学习分析哭声模式，帮助识别宝宝的需求。",
-    "powered": "由 JY Tech 提供技术支持"
+    "powered": "由 JY Tech 提供技术支持",
+    "features": {
+      "edgeAi": "端侧AI",
+      "edgeAiDesc": "所有分析在设备端完成",
+      "zeroLatency": "零延迟",
+      "zeroLatencyDesc": "即时结果，无需等待服务器",
+      "offline": "离线可用",
+      "offlineDesc": "首次加载后无需网络",
+      "privacy": "隐私优先",
+      "privacyDesc": "音频数据永远不离开设备"
+    }
   },
   "recorder": {
     "idle": "点击开始录音",

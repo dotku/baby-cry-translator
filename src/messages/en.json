@@ -10,7 +10,17 @@
   "hero": {
     "heading": "Understand Your Baby's Cry",
     "description": "Record your baby's cry and our AI will analyze it using deep learning to help identify what your baby needs.",
-    "powered": "Powered by JY Tech"
+    "powered": "Powered by JY Tech",
+    "features": {
+      "edgeAi": "Edge AI",
+      "edgeAiDesc": "All analysis runs on your device",
+      "zeroLatency": "Zero Latency",
+      "zeroLatencyDesc": "Instant results, no server wait",
+      "offline": "Works Offline",
+      "offlineDesc": "No internet needed after first load",
+      "privacy": "Privacy First",
+      "privacyDesc": "Audio never leaves your device"
+    }
   },
   "recorder": {
     "idle": "Tap to Start Recording",
