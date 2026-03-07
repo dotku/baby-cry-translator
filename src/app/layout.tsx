@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BabyTalk - AI Baby Cry Analyzer",
   description:
-    "Understand your baby's needs with AI-powered cry analysis using YAMNet deep learning",
+    "Understand your baby's needs with AI-powered cry analysis using MFCC + CNN deep learning",
 };
 
 export default function RootLayout({

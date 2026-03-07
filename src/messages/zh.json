@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "BabyTalk - AI婴儿哭声分析",
-    "description": "使用YAMNet深度学习技术，AI分析宝宝哭声，帮助理解宝宝的需求"
+    "description": "使用MFCC + CNN深度学习技术，AI分析宝宝哭声，帮助理解宝宝的需求"
   },
   "nav": {
     "title": "BabyTalk",
@@ -10,7 +10,7 @@
   "hero": {
     "heading": "读懂宝宝的哭声",
     "description": "录制宝宝的哭声，我们的AI将使用深度学习分析哭声模式，帮助识别宝宝的需求。",
-    "powered": "基于 YAMNet + TensorFlow.js"
+    "powered": "由 JY Tech 提供技术支持"
   },
   "recorder": {
     "idle": "点击开始录音",

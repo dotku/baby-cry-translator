@@ -1,4 +1,4 @@
-import * as tf from "@tensorflow/tfjs";
+import * as ort from "onnxruntime-web";
 
 export type CryCategory =
   | "hungry"
@@ -13,7 +13,16 @@ export interface ClassificationResult {
   allScores: Record<CryCategory, number>;
 }
 
-const CATEGORIES: CryCategory[] = [
+// Must match training parameters in train_model.py
+const SR = 22050;
+const DURATION = 4;
+const N_MFCC = 40;
+const N_FFT = 2048;
+const HOP_LENGTH = 512;
+const N_MELS = 128;
+const INPUT_FRAMES = 174;
+
+const INDEX_TO_CATEGORY: CryCategory[] = [
   "hungry",
   "tired",
   "discomfort",
@@ -21,153 +30,207 @@ const CATEGORIES: CryCategory[] = [
   "burp",
 ];
 
-// Frequency characteristics associated with different cry types (simplified heuristic)
-// Based on research: hungry cries tend to be rhythmic and lower pitch,
-// pain cries are higher pitch and more intense, etc.
-const CATEGORY_PROFILES = {
-  hungry: { lowFreqWeight: 0.7, midFreqWeight: 0.5, highFreqWeight: 0.2, rhythmWeight: 0.8 },
-  tired: { lowFreqWeight: 0.5, midFreqWeight: 0.6, highFreqWeight: 0.3, rhythmWeight: 0.4 },
-  discomfort: { lowFreqWeight: 0.3, midFreqWeight: 0.7, highFreqWeight: 0.5, rhythmWeight: 0.5 },
-  belly_pain: { lowFreqWeight: 0.2, midFreqWeight: 0.4, highFreqWeight: 0.8, rhythmWeight: 0.3 },
-  burp: { lowFreqWeight: 0.6, midFreqWeight: 0.3, highFreqWeight: 0.4, rhythmWeight: 0.6 },
-};
+let session: ort.InferenceSession | null = null;
 
-/**
- * Extract audio features from raw audio data using Web Audio API concepts.
- * This uses spectral analysis to characterize the cry.
- */
-function extractFeatures(audioData: Float32Array, sampleRate: number) {
-  const frameSize = 1024;
-  const numFrames = Math.floor(audioData.length / frameSize);
+async function getSession(): Promise<ort.InferenceSession> {
+  if (!session) {
+    ort.env.wasm.numThreads = 1;
+    session = await ort.InferenceSession.create("/model/cry_model.onnx", {
+      executionProviders: ["wasm"],
+    });
+  }
+  return session;
+}
 
-  let totalEnergy = 0;
-  let lowFreqEnergy = 0;
-  let midFreqEnergy = 0;
-  let highFreqEnergy = 0;
-  let zeroCrossings = 0;
+function melFilterbank(): Float32Array[] {
+  const fMax = SR / 2;
+  const melMin = 2595.0 * Math.log10(1.0);
+  const melMax = 2595.0 * Math.log10(1.0 + fMax / 700.0);
 
-  // Calculate zero-crossing rate (correlates with pitch)
-  for (let i = 1; i < audioData.length; i++) {
-    if (
-      (audioData[i] >= 0 && audioData[i - 1] < 0) ||
-      (audioData[i] < 0 && audioData[i - 1] >= 0)
-    ) {
-      zeroCrossings++;
+  const melPoints: number[] = [];
+  for (let i = 0; i <= N_MELS + 1; i++) {
+    melPoints.push(melMin + (i * (melMax - melMin)) / (N_MELS + 1));
+  }
+
+  const hzPoints = melPoints.map((m) => 700.0 * (Math.pow(10, m / 2595.0) - 1.0));
+  const binPoints = hzPoints.map((hz) => Math.floor(((N_FFT + 1) * hz) / SR));
+  const nFreqs = Math.floor(N_FFT / 2) + 1;
+  const fb: Float32Array[] = [];
+
+  for (let i = 0; i < N_MELS; i++) {
+    const filter = new Float32Array(nFreqs);
+    for (let j = binPoints[i]; j < binPoints[i + 1]; j++) {
+      if (j < nFreqs)
+        filter[j] = (j - binPoints[i]) / Math.max(binPoints[i + 1] - binPoints[i], 1);
+    }
+    for (let j = binPoints[i + 1]; j < binPoints[i + 2]; j++) {
+      if (j < nFreqs)
+        filter[j] = (binPoints[i + 2] - j) / Math.max(binPoints[i + 2] - binPoints[i + 1], 1);
+    }
+    fb.push(filter);
+  }
+  return fb;
+}
+
+function hannWindow(): Float32Array {
+  const w = new Float32Array(N_FFT);
+  for (let i = 0; i < N_FFT; i++) {
+    w[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (N_FFT - 1)));
+  }
+  return w;
+}
+
+function fft(real: Float32Array, imag: Float32Array): { real: Float32Array; imag: Float32Array } {
+  const n = real.length;
+  const outR = new Float32Array(n);
+  const outI = new Float32Array(n);
+  const bits = Math.log2(n);
+
+  for (let i = 0; i < n; i++) {
+    let rev = 0;
+    for (let j = 0; j < bits; j++) rev = (rev << 1) | ((i >> j) & 1);
+    outR[rev] = real[i];
+    outI[rev] = imag[i];
+  }
+
+  for (let size = 2; size <= n; size *= 2) {
+    const half = size / 2;
+    const angle = (-2 * Math.PI) / size;
+    for (let i = 0; i < n; i += size) {
+      for (let j = 0; j < half; j++) {
+        const cos = Math.cos(angle * j);
+        const sin = Math.sin(angle * j);
+        const tR = outR[i + j + half] * cos - outI[i + j + half] * sin;
+        const tI = outR[i + j + half] * sin + outI[i + j + half] * cos;
+        outR[i + j + half] = outR[i + j] - tR;
+        outI[i + j + half] = outI[i + j] - tI;
+        outR[i + j] += tR;
+        outI[i + j] += tI;
+      }
     }
   }
-  const zcr = zeroCrossings / audioData.length;
+  return { real: outR, imag: outI };
+}
 
-  // Simple spectral analysis using frame-based energy
-  for (let frame = 0; frame < numFrames; frame++) {
-    const start = frame * frameSize;
-    let frameEnergy = 0;
+function extractMfcc(audioData: Float32Array, sampleRate: number): Float32Array {
+  // Resample to target SR
+  let audio = audioData;
+  if (sampleRate !== SR) {
+    const ratio = SR / sampleRate;
+    const newLen = Math.floor(audio.length * ratio);
+    const resampled = new Float32Array(newLen);
+    for (let i = 0; i < newLen; i++) {
+      const src = i / ratio;
+      const idx = Math.floor(src);
+      const frac = src - idx;
+      resampled[i] = (audio[idx] || 0) * (1 - frac) + (audio[idx + 1] || 0) * frac;
+    }
+    audio = resampled;
+  }
 
-    for (let i = 0; i < frameSize; i++) {
-      const sample = audioData[start + i] || 0;
-      frameEnergy += sample * sample;
-    }
-    totalEnergy += frameEnergy;
-
-    // Estimate frequency band energies using autocorrelation-like approach
-    const lowBand = frameSize / 4;
-    const midBand = frameSize / 2;
-
-    for (let i = 0; i < lowBand; i++) {
-      lowFreqEnergy += (audioData[start + i] || 0) ** 2;
-    }
-    for (let i = lowBand; i < midBand; i++) {
-      midFreqEnergy += (audioData[start + i] || 0) ** 2;
-    }
-    for (let i = midBand; i < frameSize; i++) {
-      highFreqEnergy += (audioData[start + i] || 0) ** 2;
-    }
+  // Pad or truncate
+  const targetLen = SR * DURATION;
+  if (audio.length < targetLen) {
+    const padded = new Float32Array(targetLen);
+    padded.set(audio);
+    audio = padded;
+  } else {
+    audio = audio.slice(0, targetLen);
   }
 
   // Normalize
-  const totalBandEnergy = lowFreqEnergy + midFreqEnergy + highFreqEnergy || 1;
+  let maxVal = 0;
+  for (let i = 0; i < audio.length; i++) maxVal = Math.max(maxVal, Math.abs(audio[i]));
+  if (maxVal > 0) for (let i = 0; i < audio.length; i++) audio[i] /= maxVal;
 
-  // Rhythm detection: variance in frame energies
-  const frameEnergies: number[] = [];
+  // STFT
+  const window = hannWindow();
+  const nFreqs = Math.floor(N_FFT / 2) + 1;
+  const numFrames = Math.floor((audio.length - N_FFT) / HOP_LENGTH) + 1;
+  const fftSize = Math.pow(2, Math.ceil(Math.log2(N_FFT)));
+
+  const powerSpec: Float32Array[] = [];
   for (let frame = 0; frame < numFrames; frame++) {
-    const start = frame * frameSize;
-    let e = 0;
-    for (let i = 0; i < frameSize; i++) {
-      e += (audioData[start + i] || 0) ** 2;
-    }
-    frameEnergies.push(e);
+    const start = frame * HOP_LENGTH;
+    const real = new Float32Array(fftSize);
+    const imag = new Float32Array(fftSize);
+    for (let i = 0; i < N_FFT; i++) real[i] = (audio[start + i] || 0) * window[i];
+
+    const result = fft(real, imag);
+    const power = new Float32Array(nFreqs);
+    for (let i = 0; i < nFreqs; i++)
+      power[i] = result.real[i] * result.real[i] + result.imag[i] * result.imag[i];
+    powerSpec.push(power);
   }
 
-  const meanEnergy =
-    frameEnergies.reduce((a, b) => a + b, 0) / (frameEnergies.length || 1);
-  const energyVariance =
-    frameEnergies.reduce((a, b) => a + (b - meanEnergy) ** 2, 0) /
-    (frameEnergies.length || 1);
+  // Mel filterbank
+  const fb = melFilterbank();
+  const melSpec: Float32Array[] = [];
+  for (let frame = 0; frame < numFrames; frame++) {
+    const mel = new Float32Array(N_MELS);
+    for (let m = 0; m < N_MELS; m++) {
+      let sum = 0;
+      for (let f = 0; f < nFreqs; f++) sum += fb[m][f] * powerSpec[frame][f];
+      mel[m] = Math.log(sum + 1e-9);
+    }
+    melSpec.push(mel);
+  }
 
-  // Rhythmic cries have periodic energy patterns (lower normalized variance = more rhythmic)
-  const rhythmScore = 1 / (1 + energyVariance / (meanEnergy * meanEnergy + 1e-6));
+  // DCT-II → MFCC
+  const mfcc = new Float32Array(N_MFCC * INPUT_FRAMES);
+  for (let frame = 0; frame < INPUT_FRAMES; frame++) {
+    const src = frame < numFrames ? frame : numFrames - 1;
+    for (let k = 0; k < N_MFCC; k++) {
+      let sum = 0;
+      for (let n = 0; n < N_MELS; n++)
+        sum += melSpec[src][n] * Math.cos((Math.PI * k * (2 * n + 1)) / (2 * N_MELS));
+      const norm = k === 0 ? Math.sqrt(1 / N_MELS) : Math.sqrt(2 / N_MELS);
+      mfcc[k * INPUT_FRAMES + frame] = sum * norm;
+    }
+  }
 
-  return {
-    lowFreqRatio: lowFreqEnergy / totalBandEnergy,
-    midFreqRatio: midFreqEnergy / totalBandEnergy,
-    highFreqRatio: highFreqEnergy / totalBandEnergy,
-    zcr,
-    rhythmScore,
-    rmsEnergy: Math.sqrt(totalEnergy / (audioData.length || 1)),
-  };
+  return mfcc;
 }
 
-/**
- * Classify baby cry using spectral feature matching.
- * This is a demo-grade classifier using audio feature heuristics.
- * For production, you'd train a proper model on labeled cry data.
- */
+function softmax(arr: Float32Array): Float32Array {
+  const max = Math.max(...arr);
+  const exp = new Float32Array(arr.length);
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    exp[i] = Math.exp(arr[i] - max);
+    sum += exp[i];
+  }
+  for (let i = 0; i < arr.length; i++) exp[i] /= sum;
+  return exp;
+}
+
 export async function classifyCry(
   audioData: Float32Array,
   sampleRate: number
 ): Promise<ClassificationResult> {
-  const features = extractFeatures(audioData, sampleRate);
+  const sess = await getSession();
+  const mfcc = extractMfcc(audioData, sampleRate);
 
-  // Score each category based on how well audio features match the profile
-  const scores: Record<CryCategory, number> = {} as Record<CryCategory, number>;
+  const tensor = new ort.Tensor("float32", mfcc, [1, 1, N_MFCC, INPUT_FRAMES]);
+  const results = await sess.run({ audio_mfcc: tensor });
+  const logits = results.probabilities.data as Float32Array;
+  const probs = softmax(logits);
 
-  for (const category of CATEGORIES) {
-    const profile = CATEGORY_PROFILES[category];
-    const score =
-      (1 - Math.abs(features.lowFreqRatio - profile.lowFreqWeight * 0.5)) * 0.25 +
-      (1 - Math.abs(features.midFreqRatio - profile.midFreqWeight * 0.5)) * 0.25 +
-      (1 - Math.abs(features.highFreqRatio - profile.highFreqWeight * 0.5)) * 0.25 +
-      (1 - Math.abs(features.rhythmScore - profile.rhythmWeight)) * 0.25;
-
-    // Add some variance based on ZCR (pitch estimation)
-    const pitchFactor =
-      category === "belly_pain"
-        ? features.zcr * 2
-        : category === "hungry"
-          ? (1 - features.zcr) * 1.5
-          : 1;
-
-    scores[category] = Math.max(0, Math.min(1, score * pitchFactor));
-  }
-
-  // Normalize scores to sum to 1
-  const totalScore = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
-  for (const cat of CATEGORIES) {
-    scores[cat] = scores[cat] / totalScore;
-  }
-
-  // Find best category
-  let bestCategory: CryCategory = "hungry";
+  const allScores: Record<CryCategory, number> = {} as Record<CryCategory, number>;
+  let bestIdx = 0;
   let bestScore = 0;
-  for (const cat of CATEGORIES) {
-    if (scores[cat] > bestScore) {
-      bestScore = scores[cat];
-      bestCategory = cat;
+
+  for (let i = 0; i < INDEX_TO_CATEGORY.length; i++) {
+    allScores[INDEX_TO_CATEGORY[i]] = probs[i];
+    if (probs[i] > bestScore) {
+      bestScore = probs[i];
+      bestIdx = i;
     }
   }
 
   return {
-    category: bestCategory,
+    category: INDEX_TO_CATEGORY[bestIdx],
     confidence: Math.round(bestScore * 100),
-    allScores: scores,
+    allScores,
   };
 }
