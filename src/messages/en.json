@@ -43,21 +43,13 @@
       "label": "Hungry",
       "tip": "Your baby might be hungry. Try offering a feeding."
     },
-    "tired": {
-      "label": "Tired / Sleepy",
-      "tip": "Your baby seems tired. Try creating a calm, quiet environment for sleep."
+    "uncomfortable": {
+      "label": "Uncomfortable",
+      "tip": "Check for wet diaper, uncomfortable clothing, temperature issues, or try gentle tummy massage."
     },
-    "discomfort": {
-      "label": "Discomfort",
-      "tip": "Check for wet diaper, uncomfortable clothing, or temperature issues."
-    },
-    "belly_pain": {
-      "label": "Belly Pain",
-      "tip": "Try gentle tummy massage or bicycle legs to relieve gas."
-    },
-    "burp": {
-      "label": "Needs Burping",
-      "tip": "Hold your baby upright and gently pat their back to help release trapped air."
+    "fussy": {
+      "label": "Fussy / Tired",
+      "tip": "Your baby may be tired or needs soothing. Try creating a calm environment, gentle rocking, or patting their back."
     }
   },
   "footer": {

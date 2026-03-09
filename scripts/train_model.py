@@ -30,8 +30,21 @@ print = lambda *args, **kwargs: (sys.stdout.write(' '.join(str(a) for a in args)
 DONATEACRY_DIR = "/tmp/donateacry-corpus/donateacry_corpus_cleaned_and_updated_data"
 MENDELEY_DIR = "/tmp/mendeley-cry"
 MODEL_OUTPUT_DIR = "/Users/wlin/dev/baby-cry-translator/public/model"
-CATEGORIES = ["hungry", "tired", "discomfort", "belly_pain", "burping"]
+CATEGORIES = ["hungry", "uncomfortable", "fussy"]
 CATEGORY_LABELS = {cat: i for i, cat in enumerate(CATEGORIES)}
+
+# Map original dataset categories to our 3 classes
+DONATEACRY_MAP = {
+    "hungry": "hungry",
+    "discomfort": "uncomfortable",
+    "belly_pain": "uncomfortable",
+    "tired": "fussy",
+    "burping": "fussy",
+}
+MENDELEY_MAP = {
+    "hungry": "hungry",
+    "discomfort": "uncomfortable",
+}
 SR = 22050
 DURATION = 4
 N_MFCC = 40
@@ -152,11 +165,11 @@ def load_dataset():
     """Load dataset from multiple sources. Returns raw MFCCs + labels + groups."""
     category_mfccs = {cat: [] for cat in CATEGORIES}  # list of (mfcc, baby_id)
 
-    # 1. Load DonateACry corpus
+    # 1. Load DonateACry corpus (map 5 original categories to 3)
     print("   Loading DonateACry corpus...")
     t0 = time.time()
-    for category in CATEGORIES:
-        dir_path = os.path.join(DONATEACRY_DIR, category)
+    for orig_cat, our_cat in DONATEACRY_MAP.items():
+        dir_path = os.path.join(DONATEACRY_DIR, orig_cat)
         if not os.path.isdir(dir_path):
             continue
         files = [f for f in os.listdir(dir_path) if f.endswith(".wav")]
@@ -165,7 +178,7 @@ def load_dataset():
                 audio = load_audio(os.path.join(dir_path, fname))
                 mfcc = extract_mfcc(audio, SR)
                 baby_id = extract_baby_id(fname, "donateacry")
-                category_mfccs[category].append((mfcc, baby_id))
+                category_mfccs[our_cat].append((mfcc, baby_id))
             except Exception as e:
                 print(f"     Error: {fname}: {e}")
     print(f"   DonateACry loaded in {time.time()-t0:.1f}s")
@@ -173,8 +186,7 @@ def load_dataset():
     # 2. Load Mendeley corpus
     print("   Loading Mendeley corpus...")
     t0 = time.time()
-    mendeley_map = {"hungry": "hungry", "discomfort": "discomfort"}
-    for mend_cat, our_cat in mendeley_map.items():
+    for mend_cat, our_cat in MENDELEY_MAP.items():
         dir_path = os.path.join(MENDELEY_DIR, mend_cat)
         if not os.path.isdir(dir_path):
             continue
@@ -196,7 +208,19 @@ def load_dataset():
         baby_ids = set(bid for _, bid in category_mfccs[cat])
         print(f"   {cat}: {len(category_mfccs[cat])} samples from {len(baby_ids)} babies")
 
+    # Downsample overrepresented classes to max 2x the median class size
+    counts = sorted(c for c in raw_counts.values() if c > 0)
+    target_max = counts[len(counts) // 2] * 2  # 2x median
+    for cat in CATEGORIES:
+        n = len(category_mfccs[cat])
+        if n > target_max:
+            np.random.seed(42)
+            np.random.shuffle(category_mfccs[cat])
+            category_mfccs[cat] = category_mfccs[cat][:target_max]
+            print(f"   Downsampled {cat}: {n} -> {target_max}")
+
     # Balance classes with MFCC-level augmentation
+    raw_counts = {cat: len(samples) for cat, samples in category_mfccs.items()}
     max_count = max(raw_counts.values())
     X, y, groups = [], [], []
 
@@ -392,8 +416,7 @@ def train():
     # Save config
     config = {
         "categories": CATEGORIES,
-        "categoryMap": {"hungry": "hungry", "tired": "tired", "discomfort": "discomfort",
-                        "belly_pain": "belly_pain", "burping": "burp"},
+        "categoryMap": {"hungry": "hungry", "uncomfortable": "uncomfortable", "fussy": "fussy"},
         "sampleRate": SR,
         "duration": DURATION,
         "nMfcc": N_MFCC,

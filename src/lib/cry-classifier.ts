@@ -2,10 +2,8 @@ import * as ort from "onnxruntime-web";
 
 export type CryCategory =
   | "hungry"
-  | "tired"
-  | "discomfort"
-  | "belly_pain"
-  | "burp";
+  | "uncomfortable"
+  | "fussy";
 
 export interface ClassificationResult {
   category: CryCategory;
@@ -24,10 +22,8 @@ const INPUT_FRAMES = 174;
 
 const INDEX_TO_CATEGORY: CryCategory[] = [
   "hungry",
-  "tired",
-  "discomfort",
-  "belly_pain",
-  "burp",
+  "uncomfortable",
+  "fussy",
 ];
 
 let session: ort.InferenceSession | null = null;

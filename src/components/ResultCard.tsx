@@ -10,18 +10,14 @@ interface Props {
 
 const CATEGORY_ICONS: Record<CryCategory, string> = {
   hungry: "🍼",
-  tired: "😴",
-  discomfort: "😣",
-  belly_pain: "🤕",
-  burp: "💨",
+  uncomfortable: "😣",
+  fussy: "😫",
 };
 
 const CATEGORY_COLORS: Record<CryCategory, string> = {
   hungry: "from-orange-400 to-amber-500",
-  tired: "from-indigo-400 to-blue-500",
-  discomfort: "from-rose-400 to-pink-500",
-  belly_pain: "from-red-400 to-red-600",
-  burp: "from-teal-400 to-green-500",
+  uncomfortable: "from-rose-400 to-pink-500",
+  fussy: "from-indigo-400 to-blue-500",
 };
 
 export default function ResultCard({ result, onRecordAgain }: Props) {

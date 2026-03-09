@@ -1,17 +1,13 @@
 {
   "categories": [
     "hungry",
-    "tired",
-    "discomfort",
-    "belly_pain",
-    "burping"
+    "uncomfortable",
+    "fussy"
   ],
   "categoryMap": {
     "hungry": "hungry",
-    "tired": "tired",
-    "discomfort": "discomfort",
-    "belly_pain": "belly_pain",
-    "burping": "burp"
+    "uncomfortable": "uncomfortable",
+    "fussy": "fussy"
   },
   "sampleRate": 22050,
   "duration": 4,
@@ -23,8 +19,8 @@
     40,
     174
   ],
-  "accuracy": 0.4476725934954837,
-  "accuracy_std": 0.025963157615900512,
+  "accuracy": 0.5357323232323232,
+  "accuracy_std": 0.09810723872516493,
   "cv_folds": 5,
   "data_sources": [
     "donateacry",
