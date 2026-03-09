@@ -21,6 +21,10 @@ from sklearn.model_selection import GroupKFold
 from collections import Counter
 import json
 import time
+import sys
+
+# Force unbuffered output
+print = lambda *args, **kwargs: (sys.stdout.write(' '.join(str(a) for a in args) + kwargs.get('end', '\n')), sys.stdout.flush())
 
 # === Config ===
 DONATEACRY_DIR = "/tmp/donateacry-corpus/donateacry_corpus_cleaned_and_updated_data"

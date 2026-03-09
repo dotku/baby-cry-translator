@@ -23,8 +23,8 @@
     40,
     174
   ],
-  "accuracy": 0.4429020147096628,
-  "accuracy_std": 0.028156049333616037,
+  "accuracy": 0.4476725934954837,
+  "accuracy_std": 0.025963157615900512,
   "cv_folds": 5,
   "data_sources": [
     "donateacry",
