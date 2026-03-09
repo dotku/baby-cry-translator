@@ -2,7 +2,7 @@ import * as ort from "onnxruntime-web";
 
 export type CryCategory =
   | "hungry"
-  | "uncomfortable"
+  | "discomfort"
   | "fussy";
 
 export interface ClassificationResult {
@@ -22,7 +22,7 @@ const INPUT_FRAMES = 174;
 
 const INDEX_TO_CATEGORY: CryCategory[] = [
   "hungry",
-  "uncomfortable",
+  "discomfort",
   "fussy",
 ];
 

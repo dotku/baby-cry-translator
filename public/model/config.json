@@ -1,12 +1,12 @@
 {
   "categories": [
     "hungry",
-    "uncomfortable",
+    "discomfort",
     "fussy"
   ],
   "categoryMap": {
     "hungry": "hungry",
-    "uncomfortable": "uncomfortable",
+    "discomfort": "discomfort",
     "fussy": "fussy"
   },
   "sampleRate": 22050,

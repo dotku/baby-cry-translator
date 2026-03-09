@@ -30,20 +30,20 @@ print = lambda *args, **kwargs: (sys.stdout.write(' '.join(str(a) for a in args)
 DONATEACRY_DIR = "/tmp/donateacry-corpus/donateacry_corpus_cleaned_and_updated_data"
 MENDELEY_DIR = "/tmp/mendeley-cry"
 MODEL_OUTPUT_DIR = "/Users/wlin/dev/baby-cry-translator/public/model"
-CATEGORIES = ["hungry", "uncomfortable", "fussy"]
+CATEGORIES = ["hungry", "discomfort", "fussy"]
 CATEGORY_LABELS = {cat: i for i, cat in enumerate(CATEGORIES)}
 
 # Map original dataset categories to our 3 classes
 DONATEACRY_MAP = {
     "hungry": "hungry",
-    "discomfort": "uncomfortable",
-    "belly_pain": "uncomfortable",
+    "discomfort": "discomfort",
+    "belly_pain": "discomfort",
     "tired": "fussy",
     "burping": "fussy",
 }
 MENDELEY_MAP = {
     "hungry": "hungry",
-    "discomfort": "uncomfortable",
+    "discomfort": "discomfort",
 }
 SR = 22050
 DURATION = 4
@@ -416,7 +416,7 @@ def train():
     # Save config
     config = {
         "categories": CATEGORIES,
-        "categoryMap": {"hungry": "hungry", "uncomfortable": "uncomfortable", "fussy": "fussy"},
+        "categoryMap": {"hungry": "hungry", "discomfort": "discomfort", "fussy": "fussy"},
         "sampleRate": SR,
         "duration": DURATION,
         "nMfcc": N_MFCC,

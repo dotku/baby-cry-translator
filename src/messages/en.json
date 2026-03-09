@@ -43,7 +43,7 @@
       "label": "Hungry",
       "tip": "Your baby might be hungry. Try offering a feeding."
     },
-    "uncomfortable": {
+    "discomfort": {
       "label": "Uncomfortable",
       "tip": "Check for wet diaper, uncomfortable clothing, temperature issues, or try gentle tummy massage."
     },
