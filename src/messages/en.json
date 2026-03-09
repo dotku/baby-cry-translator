@@ -50,6 +50,10 @@
     "fussy": {
       "label": "Fussy / Tired",
       "tip": "Your baby may be tired or needs soothing. Try creating a calm environment, gentle rocking, or patting their back."
+    },
+    "no_cry": {
+      "label": "No Crying Detected",
+      "tip": "Your baby seems calm! No crying was detected in the recording."
     }
   },
   "footer": {

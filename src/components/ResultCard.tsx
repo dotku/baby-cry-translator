@@ -12,12 +12,14 @@ const CATEGORY_ICONS: Record<CryCategory, string> = {
   hungry: "🍼",
   discomfort: "😣",
   fussy: "😫",
+  no_cry: "😊",
 };
 
 const CATEGORY_COLORS: Record<CryCategory, string> = {
   hungry: "from-orange-400 to-amber-500",
   discomfort: "from-rose-400 to-pink-500",
   fussy: "from-indigo-400 to-blue-500",
+  no_cry: "from-green-400 to-emerald-500",
 };
 
 export default function ResultCard({ result, onRecordAgain }: Props) {

@@ -3,7 +3,8 @@ import * as ort from "onnxruntime-web";
 export type CryCategory =
   | "hungry"
   | "discomfort"
-  | "fussy";
+  | "fussy"
+  | "no_cry";
 
 export interface ClassificationResult {
   category: CryCategory;
@@ -204,6 +205,18 @@ export async function classifyCry(
   audioData: Float32Array,
   sampleRate: number
 ): Promise<ClassificationResult> {
+  // Check if audio has enough energy (simple cry detection)
+  let sumSq = 0;
+  for (let i = 0; i < audioData.length; i++) sumSq += audioData[i] * audioData[i];
+  const rms = Math.sqrt(sumSq / audioData.length);
+  if (rms < 0.01) {
+    return {
+      category: "no_cry",
+      confidence: 100,
+      allScores: { hungry: 0, discomfort: 0, fussy: 0, no_cry: 1 },
+    };
+  }
+
   const sess = await getSession();
   const mfcc = extractMfcc(audioData, sampleRate);
 
